@@ -1,4 +1,4 @@
-package mbta.restclient;
+package mbta;
 
 public class Constants {
 
@@ -7,5 +7,5 @@ public class Constants {
     public static final String ROUTE_BY_NAME = ROUTES_PATH + "/";
     public static final String API_KEY_NAME = "api-key";
     public static final String API_KEY_HEADER = "x-api-key";
-
+    public static final String API_FILE = "app.properties";
 }

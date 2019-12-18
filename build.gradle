@@ -22,8 +22,9 @@ repositories {
 
 dependencies {
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:28.0-jre'
+    compile 'com.google.guava:guava:28.0-jre'
     compile 'org.apache.httpcomponents:httpclient:4.5.10'
+    compile 'com.github.jasminb:jsonapi-converter:0.10'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
@@ -32,4 +33,24 @@ dependencies {
 application {
     // Define the main class for the application
     mainClassName = 'mbta.App'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "mbta.App"
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes "Main-Class": "mbta.App"
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }

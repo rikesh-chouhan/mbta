@@ -3,9 +3,9 @@ package mbta;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
-import mbta.restclient.Constants;
 import mbta.restclient.Request;
 
 public class App {
@@ -19,30 +19,39 @@ public class App {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("usage: mbta.app path-to-properties-file routes");
+        if (args.length < 1) {
+            System.out.println("usage: routes [route_type]");
         } else {
-            String propertyFilePath = args[0];
-            String action = args[1];
-            Properties properties = loadPropertiesFile(propertyFilePath);
+            String action = args[0];
+            InputStream inputStream = getPropertiesFileStream();
+            Properties properties = loadPropertiesFile(inputStream);
             App app = new App(properties);
             if (action.equalsIgnoreCase("routes")) {
-                app.runAction(action);
+                if (args.length > 1) {
+                    String specificRoute = args[1];
+                    app.runSpecificRouteName(specificRoute);
+                } else {
+                    app.runAction(action);
+                }
             } else {
-                app.runSpecificRouteName(action);
+                System.out.println("unknown option: " + action);
             }
         }
     }
 
-    public static Properties loadPropertiesFile(String file) {
+    public static Properties loadPropertiesFile(InputStream inputStream) {
         Properties properties = new Properties();
         try {
-            properties.load(new FileInputStream(file));
+            properties.load(inputStream);
         } catch (IOException fne) {
             fne.printStackTrace();
             return null;
         }
         return properties;
+    }
+
+    public static InputStream getPropertiesFileStream() {
+        return ClassLoader.getSystemResourceAsStream(Constants.API_FILE);
     }
 
     public void runAction(String action) {
