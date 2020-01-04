@@ -12,12 +12,13 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URLEncoder;
 
 import mbta.Constants;
+
 
 public class Request {
 
@@ -32,17 +33,16 @@ public class Request {
     }
 
     public void getRoutes() {
-        HttpUriRequest httpUriRequest = RequestBuilder.get()
-                .addHeader(Constants.API_KEY_HEADER, apiKey)
-                .addHeader("Accept", "application/json")
-                .setUri(Constants.SUBWAY_ROUTES)
-                .build();
         try {
+            String filter = URLEncoder.encode(Constants.FILTER_TYPE, Constants.UTF_8);
+            String types = URLEncoder.encode("0,1", Constants.UTF_8);
+            String uri = Constants.ROUTES_PATH + "?" + filter + "=" + types;
+            logger.info("uri: {}", uri);
+            HttpUriRequest httpUriRequest = buildRequest(uri);
             HttpResponse response = httpClient.execute(httpUriRequest);
             if (response.getStatusLine().getStatusCode() >= 400) {
                 logError(response);
             } else {
-                logger.info("Successful request status: {} for routes", response.getStatusLine().toString());
                 String json = getDecompressedEntity(response);
                 JSONArray array = JsonPath.read(json, "$..long_name");
                 array.forEach( element -> logger.info(element.toString()));
@@ -53,11 +53,7 @@ public class Request {
     }
 
     public void getRouteByName(String routeName) {
-        HttpUriRequest httpUriRequest = RequestBuilder.get()
-                .addHeader(Constants.API_KEY_HEADER, apiKey)
-                .addHeader("Accept", "application/json")
-                .setUri(Constants.ROUTE_BY_NAME + "/" + routeName)
-                .build();
+        HttpUriRequest httpUriRequest = buildRequest(Constants.ROUTE_BY_NAME + routeName);
         try {
             HttpResponse response = httpClient.execute(httpUriRequest);
             if (response.getStatusLine().getStatusCode() >= 400) {
@@ -89,5 +85,13 @@ public class Request {
     protected void logError(HttpResponse response) {
         logger.error("There was an error: " + response.getStatusLine().toString());
         logger.error(response.getEntity().toString());
+    }
+
+    protected HttpUriRequest buildRequest(String uri) {
+        return RequestBuilder.get()
+            .addHeader(Constants.API_KEY_HEADER, apiKey)
+            .addHeader("Accept", "application/json")
+            .setUri(uri)
+            .build();
     }
 }
