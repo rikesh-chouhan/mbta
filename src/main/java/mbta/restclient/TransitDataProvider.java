@@ -15,24 +15,27 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import mbta.Constants;
 
 
-public class Request {
+/**
+ * Abstract data fetch from Transit provider
+ */
+public class TransitDataProvider {
 
-    HttpClient httpClient;
-    String apiKey;
-    Logger logger;
+    private HttpClient httpClient;
+    private String apiKey;
+    private static Logger logger = LoggerFactory.getLogger(TransitDataProvider.class);
 
-    public Request(String key) {
+    public TransitDataProvider(String key) {
         apiKey = key;
         httpClient = HttpClientBuilder.create().build();
-        logger = LoggerFactory.getLogger(this.getClass());
     }
 
     public Map<String, String> getRoutes() {
@@ -53,7 +56,7 @@ public class Request {
                     String name = JsonPath.read(json, "$.data[" + i + "].attributes.long_name");
                     String link = JsonPath.read(json, "$.data[" + i + "].links.self");
                     routeMap.put(name, link);
-                    logger.info("name: {}", name);
+                    logger.debug("name: {}", name);
                 }
             }
         } catch (Exception e) {
@@ -78,7 +81,7 @@ public class Request {
             if (response.getStatusLine().getStatusCode() >= 400) {
                 logError(response);
             } else {
-                logger.info("Successful request status: {} for route",
+                logger.debug("Successful request status: {} for route",
                         response.getStatusLine().toString());
                 String json = getDecompressedEntity(response);
                 for (String field : Constants.PER_ROUTE_FIELDS) {
@@ -112,5 +115,30 @@ public class Request {
                 .addHeader("Accept", "application/json")
                 .setUri(uri)
                 .build();
+    }
+
+    public List<String> stopsForRoute(String routeId) {
+        List<String> stops = new ArrayList<>();
+        HttpUriRequest httpUriRequest = buildRequest(Constants.STOPS_BY_ROUTE + "=" + routeId);
+        try {
+            HttpResponse response = httpClient.execute(httpUriRequest);
+            if (response.getStatusLine().getStatusCode() >= 400) {
+                logError(response);
+            } else {
+                logger.debug("Successful stops by route: {} request status: {} ",
+                        routeId, response.getStatusLine().toString());
+                String json = getDecompressedEntity(response);
+                Integer length = JsonPath.read(json, "$.data.length()");
+                for (int i = 0; i < length; i++) {
+                    String name = JsonPath.read(json, "$.data[" + i + "].attributes.name");
+                    stops.add(name);
+                    logger.debug("name: {}", name);
+                }
+
+            }
+        } catch (Exception e) {
+            logger.error("There was an error fetching route", e);
+        }
+        return stops;
     }
 }

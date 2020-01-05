@@ -14,4 +14,5 @@ public class Constants {
             "$.data.attributes.direction_destinations"
     };
     public static final String UTF_8 = "UTF-8";
+    public static final String STOPS_BY_ROUTE = "https://api-v3.mbta.com/stops?filter[route]";
 }
