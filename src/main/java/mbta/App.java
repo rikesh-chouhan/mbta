@@ -6,10 +6,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import mbta.restclient.TransitDataProvider;
 
@@ -46,6 +49,8 @@ public class App {
                 if (args.length > 1) {
                     if ("stats".equals(args[1].toLowerCase())) {
                         app.routeStats();
+                    } else if ("common".equals(args[1].toLowerCase())) {
+                        app.findCommonStopsBetweenRoutes();
                     }
                 } else {
                     app.runRoutes();
@@ -125,8 +130,24 @@ public class App {
         return new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).stopsForRoute(routeId);
     }
 
-    private void findCommonStopsBetweenRoutes(Map<String, List<String>> routeStops) {
-
+    private void findCommonStopsBetweenRoutes() {
+        Map<String, List<String>> routeStops = routeStopsMap();
+        for (Map.Entry<String, List<String>> entry: routeStops.entrySet()) {
+            Set<String> routeNames = routeStops.keySet();
+            routeNames.forEach( name -> {
+                if (!name.equalsIgnoreCase(entry.getKey())) {
+                    List<String> stopList = new ArrayList<>(entry.getValue());
+                    List<String> commonSingle = stopList.stream()
+                            .filter(routeStops.get(name)::contains)
+                            .collect(Collectors.toList());
+                    if (commonSingle.size() > 0) {
+                        logger.info("These stops: {} {} common between these Routes: {} and {}",
+                                commonSingle.toString(), commonSingle.size() > 1? "are" : "is",
+                                entry.getKey(), name);
+                    }
+                }
+            });
+        }
     }
 
     /**
