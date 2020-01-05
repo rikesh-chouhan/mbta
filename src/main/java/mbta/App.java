@@ -28,11 +28,19 @@ public class App {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            logger.info("usage: routes [stats]");
+            logger.info("usage 1: routes");
+            logger.info("Lists Subway routes - type 0 and 1");
+            logger.info("usage 2: routes stats");
+            logger.info("Provides Subway routes with least and most number of stops");
         } else {
             String action = args[0];
             InputStream inputStream = getPropertiesFileStream();
             Properties properties = loadPropertiesFile(inputStream);
+            if (properties == null) {
+                logger.error("There was an error loading configs from: {} " +
+                        "please make sure the file is in classpath", Constants.API_FILE);
+                System.exit(-1);
+            }
             App app = new App(properties);
             if (action.equalsIgnoreCase("routes")) {
                 if (args.length > 1) {
@@ -48,6 +56,12 @@ public class App {
         }
     }
 
+    /**
+     * Load configs needed for running this app
+     *
+     * @param inputStream
+     * @return
+     */
     public static Properties loadPropertiesFile(InputStream inputStream) {
         Properties properties = new Properties();
         try {
