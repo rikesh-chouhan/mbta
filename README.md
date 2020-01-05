@@ -9,3 +9,10 @@
 - `gradle fatJar` -- Builds the jar with all the dependencies.
 - `java -jar` *path to fatjar* `routes`
 - `java -jar` *path to fatjar* `routes stats`
+
+The Subway routes are obtained by using the MBTA provided filters on the API.
+viz: https://api-v3.mbta.com/routes?filter\[type\]=0,1 this allows for restricting the amount
+of data being returned and working only on those specific results
+without having to apply filtering logic after receiving the data.
+
+  

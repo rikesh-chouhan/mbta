@@ -38,6 +38,11 @@ public class TransitDataProvider {
         httpClient = HttpClientBuilder.create().build();
     }
 
+    /**
+     * Get routes by providing a filter for the requested routes.
+     *
+     * @return
+     */
     public Map<String, String> getRoutes() {
         Map<String, String> routeMap = new LinkedHashMap<>();
         try {
