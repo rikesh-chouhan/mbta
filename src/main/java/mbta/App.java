@@ -77,22 +77,28 @@ public class App {
         return ClassLoader.getSystemResourceAsStream(Constants.API_FILE);
     }
 
+    /**
+     * Fetch the route name (display name) to route path map.
+     * eg:
+     * "Red Line" -> "/routes/Red"
+     *
+     * @return
+     */
+    private Map<String, String> fetchRouteMap() {
+        return new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).getRoutes();
+    }
+
     public void runRoutes() {
-        Map<String, String> routePaths = new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).getRoutes();
-        routePaths.keySet().forEach(name -> logger.info("Subway name: {}", name));
+        fetchRouteMap().keySet().forEach(name -> logger.info("Subway name: {}", name));
     }
 
     public void routeStats() {
-        Map<String, String> routePaths = new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).getRoutes();
-        Map<String, List<String>> routeStops = new LinkedHashMap<>();
+        Map<String, List<String>> routeStops = routeStopsMap();
         String nameMostStops = "", nameLeastStops = "";
         int max = Integer.MIN_VALUE;
         int min = Integer.MAX_VALUE;
-        for (Map.Entry<String, String> entry: routePaths.entrySet()) {
-            logger.info("Getting stops for route: {}", entry.getKey());
-            String split[] = entry.getValue().split("/");
-            List<String> stops = stopsForRoute(split[2]);
-            routeStops.put(entry.getValue(), stops);
+        for (Map.Entry<String, List<String>> entry: routeStops.entrySet()) {
+            List<String> stops = entry.getValue();
             if (stops.size() < min) {
                 min = stops.size();
                 nameLeastStops = entry.getKey();
@@ -106,6 +112,11 @@ public class App {
         logger.info("Subway route with most stops: {} count: {}", nameMostStops, max);
     }
 
+    private String provideRouteIdFromPath(String path) {
+        int index = path.lastIndexOf("/");
+        return index > (-1) ? path.substring(index + 1) : path;
+    }
+
     public void runSpecificRouteName(String name) {
         new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).routeByName(name);
     }
@@ -114,13 +125,23 @@ public class App {
         return new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).stopsForRoute(routeId);
     }
 
-    private void addSleep() {
-        logger.debug("Waiting for 1 second");
-        try {
-            Thread.sleep(SECOND);
-            logger.debug("Done waiting");
-        } catch (InterruptedException ie) {
-            logger.error("Error while waiting a minute before making next request", ie);
+    private void findCommonStopsBetweenRoutes(Map<String, List<String>> routeStops) {
+
+    }
+
+    /**
+     * Fetch the route to stops map.
+     * @return
+     */
+    private Map<String, List<String>> routeStopsMap() {
+        Map<String, String> routePaths = fetchRouteMap();
+        Map<String, List<String>> routeStops = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry: routePaths.entrySet()) {
+            logger.debug("Getting stops for route: {}", entry.getKey());
+            String routeId = provideRouteIdFromPath(entry.getValue());
+            List<String> stops = stopsForRoute(routeId);
+            routeStops.put(entry.getKey(), stops);
         }
+        return routeStops;
     }
 }
