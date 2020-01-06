@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -132,6 +133,7 @@ public class App {
 
     private void findCommonStopsBetweenRoutes() {
         Map<String, List<String>> routeStops = routeStopsMap();
+        Map<String, Set<String>> sharedRoutes = new LinkedHashMap<>();
         for (Map.Entry<String, List<String>> entry: routeStops.entrySet()) {
             Set<String> routeNames = routeStops.keySet();
             routeNames.forEach( name -> {
@@ -141,12 +143,23 @@ public class App {
                             .filter(routeStops.get(name)::contains)
                             .collect(Collectors.toList());
                     if (commonSingle.size() > 0) {
-                        logger.info("These stops: {} {} common between these Routes: {} and {}",
-                                commonSingle.toString(), commonSingle.size() > 1? "are" : "is",
-                                entry.getKey(), name);
+                        commonSingle.stream().forEach(stop -> {
+                            Set<String> routes = null;
+                            if (sharedRoutes.containsKey(stop)) {
+                                routes = sharedRoutes.get(stop);
+                            } else {
+                                routes = new LinkedHashSet<>();
+                            }
+                            routes.add(entry.getKey());
+                            routes.add(name);
+                            sharedRoutes.put(stop, routes);
+                        });
                     }
                 }
             });
+        }
+        for (Map.Entry<String, Set<String>> entry: sharedRoutes.entrySet()) {
+            logger.info("Stop: {} is common to these routes: {}", entry.getKey(), entry.getValue());
         }
     }
 
