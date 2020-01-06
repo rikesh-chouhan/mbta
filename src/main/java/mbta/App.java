@@ -131,6 +131,10 @@ public class App {
         return new TransitDataProvider(configs.getProperty(Constants.API_KEY_NAME)).stopsForRoute(routeId);
     }
 
+    /**
+     * Create an index of stops to all routes it is on.
+     * Use the existing route -> stops map to build the reverse map.
+     */
     private void findCommonStopsBetweenRoutes() {
         Map<String, List<String>> routeStops = routeStopsMap();
         Map<String, Set<String>> sharedRoutes = new LinkedHashMap<>();
